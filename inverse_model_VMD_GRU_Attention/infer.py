@@ -1,46 +1,24 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import annotations
 
-import os, math
-import numpy as np
-import pandas as pd
+from pathlib import Path
 from typing import List, Optional
 
+import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset, WeightedRandomSampler
+from torch.utils.data import Dataset, DataLoader
 
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+from utils.loss import LossPack, compute_metrics
 
 
-# ---------------- Utils ----------------
-def set_seed(seed=42):
-    torch.manual_seed(seed); np.random.seed(seed)
-    if torch.cuda.is_available(): torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-
-def metrics(y_true, y_pred, name=""):
-    y_true = np.asarray(y_true).reshape(-1); y_pred = np.asarray(y_pred).reshape(-1)
-    mae = mean_absolute_error(y_true, y_pred)
-    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
-    r2 = r2_score(y_true, y_pred)
-    print(f"{name}  MAE:{mae:.6f}  RMSE:{rmse:.6f}  R2:{r2:.6f}")
-    return mae, rmse, r2
-
-def persistence_baseline(last_values: np.ndarray, horizon: int) -> np.ndarray:
-    """
-    持久化基线：将每个时间点的最后一个值（last_value）重复用于预测接下来的 H 个时间步。
-    """
-    return np.repeat(last_values, horizon, axis=1)  # 复制列以生成持久化预测
+def _get(args, name, default=None):
+    return getattr(args, name, default)
 
 
+<<<<<<< HEAD
 def estimate_delay(true_series: np.ndarray, pred_series: np.ndarray, max_lag: int = 200):
     
     x = np.asarray(true_series, dtype=float).ravel()
@@ -536,81 +514,144 @@ def main():
         include_future_exog=include_future_exog,
         block_size=block_size,
         device=device
+=======
+def pick_device(device_arg: str = "auto") -> torch.device:
+    if device_arg == "cuda":
+        return torch.device("cuda")
+    if device_arg == "cpu":
+        return torch.device("cpu")
+    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+class SequenceCSVDataset(Dataset):
+
+
+    def __init__(self, df: pd.DataFrame, input_cols: List[str], seq_len: int, stride: int, file_col: Optional[str] = None):
+        self.samples = []
+        self.input_cols = input_cols
+        self.seq_len = seq_len
+        self.stride = stride
+        self.file_col = file_col if file_col and file_col in df.columns else None
+
+        for c in input_cols:
+            df[c] = pd.to_numeric(df[c], errors="coerce")
+        df = df.dropna(subset=input_cols).reset_index(drop=True)
+
+        if self.file_col:
+            for _, g in df.groupby(self.file_col, sort=False):
+                self._add_group(g)
+        else:
+            self._add_group(df)
+
+    def _add_group(self, g: pd.DataFrame):
+        X_all = g[self.input_cols].to_numpy(dtype=np.float32)
+        n = len(g)
+        L = self.seq_len
+        if n < L:
+            return
+        for start in range(0, n - L + 1, self.stride):
+            x = X_all[start:start + L]
+            self.samples.append(x)
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        return torch.from_numpy(self.samples[idx])
+
+
+def build_model(args, input_dim: int) -> nn.Module:
+    model_name = _get(args, "model", "Attention_GRU")
+
+    if model_name == "GRU":
+        from inverse_model_VMD_GRU_Attention.models.GRU_model import GRUModel
+        return GRUModel(input_dim=input_dim,
+                        hidden_size=_get(args, "hidden_size", 128),
+                        num_layers=_get(args, "num_layers", 2),
+                        dropout=_get(args, "dropout", 0.1),
+                        output_dim=_get(args, "pred_len", 1))
+
+    if model_name == "LSTM":
+        from inverse_model_VMD_GRU_Attention.models.LSTM_model import LSTMModel
+        return LSTMModel(input_dim=input_dim,
+                         hidden_size=_get(args, "hidden_size", 128),
+                         num_layers=_get(args, "num_layers", 2),
+                         dropout=_get(args, "dropout", 0.1),
+                         output_dim=_get(args, "pred_len", 1))
+
+    if model_name in ["Attention_GRU", "GRU_Attention"]:
+        from inverse_model_VMD_GRU_Attention.models.Attention_GRU_model import AttentionGRUModel
+        return AttentionGRUModel(input_dim=input_dim,
+                                 hidden_size=_get(args, "hidden_size", 128),
+                                 num_layers=_get(args, "num_layers", 2),
+                                 dropout=_get(args, "dropout", 0.1),
+                                 attn_dim=_get(args, "attn_dim", 128),
+                                 output_dim=_get(args, "pred_len", 1))
+
+    raise ValueError(f"Unknown model: {model_name}")
+
+
+def load_ckpt(path: Path, model: nn.Module):
+    ckpt = torch.load(path, map_location="cpu")
+    model.load_state_dict(ckpt["model_state"])
+
+
+@torch.no_grad()
+def infer(args):
+    device = pick_device(_get(args, "device", "auto"))
+
+    data_csv = Path(_get(args, "data_csv", "force_control_dataset.csv"))
+    out_dir = Path(_get(args, "out_dir", "fig_GRU_Attention_MRB"))
+    ckpt_path = Path(_get(args, "ckpt_path", "best_model.pth"))
+    infer_out = Path(out_dir) / _get(args, "infer_out", "infer_results.npz")
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    if not data_csv.exists():
+        raise FileNotFoundError(f"CSV not found: {data_csv.resolve()}")
+    if not ckpt_path.exists():
+        raise FileNotFoundError(f"Checkpoint not found: {ckpt_path.resolve()}")
+
+    df = pd.read_csv(data_csv, encoding="utf-8-sig")
+
+    input_cols = [c.strip() for c in _get(args, "input_cols", "force").split(",") if c.strip()]
+    for c in input_cols:
+        if c not in df.columns:
+            raise ValueError(f"Column '{c}' not found in CSV. Columns={list(df.columns)}")
+
+    file_col = _get(args, "file_col", "file")
+    file_col = file_col if file_col in df.columns else None
+
+    dataset = SequenceCSVDataset(
+        df=df,
+        input_cols=input_cols,
+        seq_len=int(_get(args, "seq_len", 64)),
+        stride=int(_get(args, "stride", 1)),
+        file_col=file_col,
+>>>>>>> 351954c (Update configs and data processing utilities)
     )
 
-    # Datasets / Loaders（注意 y_*_model 是 z-space 多步目标）
-    label_shuffle = False  # ← “泄漏否定测试”时设 True
-    if label_shuffle:
-        perm = torch.randperm(data.y_train_model.shape[0])
-        y_train = data.y_train_model[perm]
-    else:
-        y_train = data.y_train_model
+    if len(dataset) == 0:
+        raise RuntimeError("No inference windows built. Check seq_len/stride or CSV content.")
 
-    train_ds = TensorDataset(data.X_train, data.last_train, y_train)
-    val_ds   = TensorDataset(data.X_val,   data.last_val,  data.y_val_model)
-    test_ds  = TensorDataset(data.X_test,  data.last_test, data.y_test_model)
-
-    # 训练采样器（不改变损失标尺，只影响抽样次序）
-    sampler = WeightedRandomSampler(weights=data.train_weights.cpu(), num_samples=len(train_ds), replacement=True)
-    train_loader = DataLoader(train_ds, batch_size=batch_size, sampler=sampler, drop_last=False)
-    val_loader   = DataLoader(val_ds,   batch_size=batch_size, shuffle=False, drop_last=False)
-    test_loader  = DataLoader(test_ds,  batch_size=batch_size, shuffle=False, drop_last=False)
-
-    model = GRUHead(
-        input_size=data.input_size, hidden_size=hidden_size,
-        num_layers=num_layers, horizon=horizon, dropout=dropout
-    ).to(device)
-
-    trainer = Trainer(
-        model, lr=lr, weight_decay=weight_decay, grad_clip=grad_clip, device=device,
-        use_event_weight=True, weight_alpha=3.0, weight_gamma=1.0, weight_cap=10.0
+    loader = DataLoader(
+        dataset,
+        batch_size=int(_get(args, "batch_size", 64)),
+        shuffle=False,
+        num_workers=int(_get(args, "num_workers", 0)),
+        drop_last=False,
     )
 
-    # 训练（日志使用未加权 z-MSE）
-    tr_loss, va_loss = trainer.fit(train_loader, val_loader, epochs=epochs, debug_std=False)
+    model = build_model(args, input_dim=len(input_cols)).to(device)
+    load_ckpt(ckpt_path, model)
+    model.eval()
 
-    # —— 诊断：看测试集 z 空间的方差与 MSE ——
-    @torch.no_grad()
-    def debug_test_stats(loader, model_):
-        P, T = [], []
-        for xb, _, yb in loader:
-            pr, _ = model_(xb)
-            P.append(pr.cpu().numpy()); T.append(yb.cpu().numpy())
-        P = np.concatenate(P); T = np.concatenate(T)
-        print(f"[TEST/Z] pred std={P.std():.3f}, target std={T.std():.3f}, MSE={np.mean((P-T)**2):.4f}")
-    debug_test_stats(test_loader, model)
+    preds_all = []
+    for x in loader:
+        x = x.to(device)
+        pred = model(x)  # (B, pred_len)
+        preds_all.append(pred.detach().cpu().numpy())
 
-    # 测试集预测（物理单位，多步）
-    to_phys = lambda yh, last: data.to_physical(yh, last)
-    preds_phys, trues_phys = trainer.predict_phys(test_loader, to_phys)
-    assert preds_phys.shape == trues_phys.shape, f"shape mismatch: {preds_phys.shape} vs {trues_phys.shape}"
-
-    # === 信号时延估计（基于去重叠平均后的连续轨迹，亚采样精度） ===
-    true_track = stitch_windows(trues_phys)   # [T_total]
-    pred_track = stitch_windows(preds_phys)   # [T_total]
-    lag, corr = estimate_delay(true_track, pred_track, max_lag=delay_max_lag)
-    print(f"[DELAY] 估计滞后: {lag:.3f} 个采样点（相关={corr:.3f}）")
-    if sampling_period is not None:
-        print(f"[DELAY] 折算为时间: ~{lag * sampling_period:.6f} s")
-
-    # （可选）只看一步(h=1)的滞后
-    t_h1 = trues_phys[:, 0]
-    p_h1 = preds_phys[:, 0]
-    lag1, corr1 = estimate_delay(t_h1, p_h1, max_lag=delay_max_lag)
-    print(f"[DELAY-h=1] 估计滞后: {lag1:.3f} 个采样点（相关={corr1:.3f}）")
-    if sampling_period is not None:
-        print(f"[DELAY-h=1] 折算为时间: ~{lag1 * sampling_period:.6f} s")
-
-    # 基线（物理单位；持久化基线：把 y_t 持久化为 y_{t+1..t+H}）
-    baseline_phys = persistence_baseline(data.last_test.cpu().numpy(), horizon)
-
-    print("\n===== Test Metrics (physical units) =====")
-    metrics(trues_phys, preds_phys,   name="[Model   ]")
-    metrics(trues_phys, baseline_phys,name="[Persist ]")
-
-    # 作图（含 step1_only / avg_track）——（未做新的“对齐图”，仅保留原有图）
-    plot_all(tr_loss, va_loss, trues_phys, preds_phys, baseline_phys, outdir="figs_GRU_MRB", interval=100)
-
-
-if __name__ == "__main__":
-    main()
+    y_pred = np.concatenate(preds_all, axis=0)
+    np.savez(infer_out, y_pred=y_pred)
+    print(f"[OK] Inference saved: {infer_out.resolve()}")

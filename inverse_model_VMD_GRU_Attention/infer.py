@@ -42,10 +42,7 @@ def persistence_baseline(last_values: np.ndarray, horizon: int) -> np.ndarray:
 
 
 def estimate_delay(true_series: np.ndarray, pred_series: np.ndarray, max_lag: int = 200):
-    """
-    返回最佳滞后（>0 表示预测“落后”于真值；单位=采样点）及对应相关系数。
-    先做整数栅格搜索，再用 3 点抛物线插值到亚采样精度。
-    """
+    
     x = np.asarray(true_series, dtype=float).ravel()
     y = np.asarray(pred_series, dtype=float).ravel()
     x = x - x.mean(); y = y - y.mean()
@@ -80,9 +77,7 @@ def estimate_delay(true_series: np.ndarray, pred_series: np.ndarray, max_lag: in
     return best_lag_int, best_corr
 
 def stitch_windows(windows: np.ndarray) -> np.ndarray:
-    """
-    将 [N, H] 的多步窗口拼接成一条连续序列；重叠处做简单平均。
-    """
+
     N, H = windows.shape
     L = N + H - 1
     acc = np.zeros(L, dtype=float)
@@ -95,18 +90,13 @@ def stitch_windows(windows: np.ndarray) -> np.ndarray:
 
 # ---------------- Data ----------------
 class MRDamperData:
-    """
-    - 历史特征/历史 y：StandardScaler（仅作为输入）
-    - 目标：z-score（支持 'level' 多步 or 'delta' 多步）
-    - 注入：t+H 的外生控制量（及其与 t 的差），增强可辨识性
-    - 划分：按 block 随机分块，避免时间泄漏
-    """
+ 
     def __init__(
         self,
         csv_path: str,
         feature_cols: List[str],
         target_col: str,
-        future_exog_cols: Optional[List[str]] = None,   # 注入的外生控制量列名（在 t+H）
+        future_exog_cols: Optional[List[str]] = None,   
         seq_len: int = 50,
         horizon: int = 3,                    # 预测步长 H，同时也是输出维度
         predict_mode: str = "level",         # "level": 直接预测 y；"delta": 预测多步增量

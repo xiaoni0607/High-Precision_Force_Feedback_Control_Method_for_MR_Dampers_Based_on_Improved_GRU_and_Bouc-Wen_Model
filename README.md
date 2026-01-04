@@ -28,6 +28,8 @@ The overall control pipeline consists of three key components:
 3. **Closed-loop Compensation (PPO-PID)**  
    A PPO-optimized PID controller compensates modeling errors and disturbances, ensuring robust and accurate force tracking in real-time interaction tasks.
 
+<h3 align="center">ABSTRACT</h3>
+
 ## Environment Setup
 
 Configure necessary environment packages based on `requirements.txt`.

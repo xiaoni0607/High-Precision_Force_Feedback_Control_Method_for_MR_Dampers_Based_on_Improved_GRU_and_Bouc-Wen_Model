@@ -15,15 +15,15 @@ As a compact, low-power, and safe actuator, Magnetorheological (MR) brake is com
 
 ## Method Overview
 
-This project proposes a high-precision force feedback control framework for magnetorheological (MR) dampers by integrating a physics-informed forward model and a data-driven inverse model.
+This project proposes a high-precision force feedback control framework for magnetorheological (MR) brakes by integrating a physics-informed forward model and a data-driven inverse model.
 
 The overall control pipeline consists of three key components:
 
 1. **Forward Model (FABW)**  
-   An improved Fractional Asymmetric Bouc–Wen (FABW) model is developed to accurately characterize the hysteresis, rate-dependence, and asymmetry of MR dampers under varying operating conditions.
+   An improved Fractional Asymmetric Bouc–Wen (FABW) model is developed to accurately characterize the hysteresis, rate-dependence, and asymmetry of MR brakes under varying operating conditions.
 
 2. **Inverse Model (VMD-GRU-Attention)**  
-   A data-driven inverse model based on Variational Mode Decomposition (VMD), Gated Recurrent Unit (GRU), and Attention mechanism is designed to map the desired force to the required excitation current with low latency. The overall structure of the inverse moddel is shown below.
+   A data-driven inverse model based on Variational Mode Decomposition (VMD), Gated Recurrent Unit (GRU), and Attention mechanism is designed to map the desired force to the required excitation current with low latency. The overall structure of the inverse model is shown below.
 <p align="center">
   <img src="fig1.jpg" width="500">
 </p>
@@ -49,7 +49,7 @@ configs/configs.py
 
 
 ## DATASET
-The dataset we used was derived from an experiment platform of a direct-acting magnetorheological (MR) brake independently developed by us. By setting up a complete mechanical test and control system, dynamic response data of the input current and output force of the MR brake under different displacement and speed conditions were collected and used as the training and test sets for the model. The partially collected current and output force data can be viewed in the folder"The dataset we collected".
+The dataset we used was derived from an experiment platform of a direct-acting magnetorheological (MR) brake independently developed by us. By setting up a complete mechanical test and control system, dynamic response data of the input current and output force of the MR brake under different displacement and speed conditions were collected and used as the training and test sets for the model. The partially collected current and output force data can be viewed in the folder `The dataset we collected`.
 
 ## Data Preparation
 Start by running `utils/data_deal.py` to retrieve and organize the required original dataset.

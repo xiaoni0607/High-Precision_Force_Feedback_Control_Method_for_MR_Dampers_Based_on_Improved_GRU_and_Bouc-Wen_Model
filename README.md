@@ -4,7 +4,7 @@ Based on an Improved GRU and Bouc–Wen Model
 </h1>
 
 <p align="center">
-Your Name, Co-author Name<br>
+Dapeng Chen, Zhenjie Ma, Haojun Ni, Hong Zeng, Jia Liu, and Aiguo Song<br>
 Nanjing University of Information Science and Technology
 </p>
 

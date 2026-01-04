@@ -1,16 +1,20 @@
 # High-Precision Force Feedback Control Method for MR Dampers  
 Based on an Improved GRU and Bouc–Wen Model
 
-**Authors:** Your Name  
-**Affiliation:** Your University  
+<p align="center">
+Your Name, Co-author Name<br>
+Your University, Your Department
+</p>
 
 ---
 
-## Abstract
+## ABSTRACT
 
-Magnetorheological (MR) dampers are widely used in force feedback and intelligent control systems. However, their strong hysteresis nonlinearity and complex dynamic behavior make high-precision force control challenging. Traditional physics-based models often suffer from limited adaptability under varying conditions, while purely data-driven approaches may lack physical consistency.
+Magnetorheological (MR) dampers exhibit strong hysteresis nonlinearity and complex dynamic behaviors, which pose significant challenges to high-precision force feedback control. Traditional physics-based models often lack adaptability under varying operating conditions, while purely data-driven approaches may suffer from limited physical interpretability.
 
-To address these issues, this work proposes a high-precision force feedback control framework for MR dampers by combining a forward hysteresis model and a data-driven inverse model. An improved Bouc–Wen model is employed to accurately characterize the hysteresis behavior of MR dampers. Based on this, an improved Gated Recurrent Unit (GRU) network is designed to learn the inverse mapping from desired force to control current. Experimental results demonstrate that the proposed method achieves superior force tracking accuracy and stability, providing an effective solution for MR damper force feedback control.
+In this work, a high-precision force feedback control framework for MR dampers is proposed by integrating a forward hysteresis model and a learning-based inverse model. An improved Bouc–Wen model is employed to characterize the hysteresis behavior of MR dampers. Based on this, an improved Gated Recurrent Unit (GRU) network is designed to learn the inverse mapping from desired force to control current. Experimental results demonstrate that the proposed method achieves superior force tracking accuracy and robustness, providing an effective solution for MR damper force feedback control.
+
+---
 
 ---
 

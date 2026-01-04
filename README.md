@@ -30,4 +30,4 @@ The overall control pipeline consists of three key components:
 
 ## Environment Setup
 
-Configure necessary environment packages based on requirements.txt.
+Configure necessary environment packages based on ```bash requirements.txt.

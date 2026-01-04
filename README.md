@@ -25,11 +25,14 @@ The overall control pipeline consists of three key components:
 2. **Inverse Model (VMD-GRU-Attention)**  
    A data-driven inverse model based on Variational Mode Decomposition (VMD), Gated Recurrent Unit (GRU), and Attention mechanism is designed to map the desired force to the required excitation current with low latency. The overall structure of the inverse moddel is shown below.
 <p align="center">
-  <img src="fig1.jpg" width="700">
+  <img src="fig1.jpg" width="500">
 </p>
 
-4. **Closed-loop Compensation (PPO-PID)**  
-   A PPO-optimized PID controller compensates modeling errors and disturbances, ensuring robust and accurate force tracking in real-time interaction tasks.
+3. **Closed-loop Compensation (PPO-PID)**  
+   A PPO-optimized PID controller compensates modeling errors and disturbances, ensuring robust and accurate force tracking in real-time interaction tasks.The flowchart of the compound control algorithm for the MR brake is shown below.
+<p align="center">
+  <img src="fig2.jpg" width="500">
+</p>
 
 <h3 align="center">IMPLEMENTATION DETAILS</h3>
 

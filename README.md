@@ -25,7 +25,7 @@ The overall control pipeline consists of three key components:
 2. **Inverse Model (VMD-GRU-Attention)**  
    A data-driven inverse model based on Variational Mode Decomposition (VMD), Gated Recurrent Unit (GRU), and Attention mechanism is designed to map the desired force to the required excitation current with low latency. The overall structure of the inverse model is shown below.
 <p align="center">
-  <img src="fig1.jpg" width="500">
+  <img src="fig1.jpg" width="450">
 </p>
 
 3. **Closed-loop Compensation (PPO-PID)**  

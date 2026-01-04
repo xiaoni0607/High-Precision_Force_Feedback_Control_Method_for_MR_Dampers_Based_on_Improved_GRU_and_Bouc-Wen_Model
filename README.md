@@ -1,5 +1,5 @@
 <h1 align="center">
-High-Precision Force Feedback Control Method for MR Dampers <br>
+High-Precision Force Feedback Control Method for MR Brakes <br>
 Based on an Improved GRU and Bouc–Wen Model
 </h1>
 

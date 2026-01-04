@@ -49,7 +49,7 @@ configs/configs.py
 
 
 ## DATASET
-The dataset we used was derived from an experiment platform of a direct-acting magnetorheological (MR) brake independently developed by us. By setting up a complete mechanical test and control system, dynamic response data of the input current and output force of the MR brake under different displacement and speed conditions were collected and used as the training and test sets for the model. The partially collected current and output force data can be viewed in the folder `The dataset we collected`.
+The dataset we used was derived from an experiment platform of a direct-acting magnetorheological (MR) brake independently developed by us. By setting up a complete mechanical test and control system, dynamic response data of the input current and output force of the MR brake under different displacement and speed conditions were collected and used as the training and test sets for the model. The partially collected current and output force data can be viewed in `force_control_dataset.csv`.
 
 ## Data Preparation
 Start by running `utils/data_deal.py` to retrieve and organize the required original dataset.
